@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { validarToken, validarRol } = require('../middlewares/auth');
 const { 
     getOrdenes, 
     getOrden, 
@@ -9,16 +10,16 @@ const {
     cambiarEstadoOrden 
 } = require('../controllers/ordenes.controllers');
 
-router.get('/ordenes', getOrdenes);
+router.get('/ordenes', validarToken, validarRol(1), getOrdenes);
 
-router.get('/orden/:idOrden', getOrden);
+router.get('/orden/:idOrden', validarToken, getOrden);
 
-router.post('/orden', createOrden);
+router.post('/orden', validarToken, createOrden);
 
-router.put('/orden/:idOrden', updateOrden);
+router.put('/orden/:idOrden', validarToken, updateOrden);
 
-router.put('/cancelar/orden/:idOrden', cancelarOrden);
+router.put('/cancelar/orden/:idOrden', validarToken, cancelarOrden);
 
-router.put('/cambiar-estado/orden/:idOrden', cambiarEstadoOrden);
+router.put('/cambiar-estado/orden/:idOrden', validarToken, validarRol(1), cambiarEstadoOrden);
 
 module.exports = router;

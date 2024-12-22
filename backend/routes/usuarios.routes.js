@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { validarToken, validarRol } = require('../middlewares/auth');
 const { 
     getUsuarios, 
     getUsuario, 
@@ -9,16 +10,16 @@ const {
     setUsuarioInactivo 
 } = require('../controllers/usuarios.controllers');
 
-router.get('/usuarios', getUsuarios);
+router.get('/usuarios', validarToken, validarRol(1), getUsuarios);
 
-router.get('/usuario/:idUsuario', getUsuario);
+router.get('/usuario/:idUsuario', validarToken, getUsuario);
 
-router.post('/usuario', createUsuario);
+router.post('/usuario', validarToken, validarRol(1), createUsuario);
 
-router.put('/usuario/:idUsuario', updateUsuario);
+router.put('/usuario/:idUsuario', validarToken, updateUsuario);
 
-router.put('deshabilitar/usuario/:idUsuario', setUsuarioInactivo);
+router.put('deshabilitar/usuario/:idUsuario', validarToken, validarRol(1), setUsuarioInactivo);
 
-router.put('/actualizar-password/usuario/:idUsuario', actualizarPassword);
+router.put('/actualizar-password/usuario/:idUsuario', validarToken, actualizarPassword);
 
 module.exports = router;

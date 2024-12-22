@@ -1,5 +1,5 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const sequelize = require('./sequelize');
 const routes = require('./routes/index');
@@ -12,6 +12,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 
 // Ruta base
 app.get('/', (req, res) => {

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { validarToken, validarRol } = require('../middlewares/auth');
 const { 
     getCategorias, 
     getCategoria, 
@@ -8,14 +9,14 @@ const {
     setCategoriaInactivo
 } = require('../controllers/categorias.controllers');
 
-router.get('/categorias', getCategorias);
+router.get('/categorias', validarToken, getCategorias);
 
-router.get('/categoria', getCategoria);
+router.get('/categoria', validarToken, getCategoria);
 
-router.post('/categoria', createCategoria);
+router.post('/categoria', validarToken, validarRol(1), createCategoria);
 
-router.put('/categoria/:idCategoria', updateCategoria);
+router.put('/categoria/:idCategoria', validarToken, validarRol(1), updateCategoria);
 
-router.put('deshabilitar/categoria/:idCategoria', setCategoriaInactivo);
+router.put('deshabilitar/categoria/:idCategoria', validarToken, validarRol(1), setCategoriaInactivo);
 
 module.exports = router;

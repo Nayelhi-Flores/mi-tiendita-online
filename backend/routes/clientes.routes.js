@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { validarToken, validarRol } = require('../middlewares/auth');
 const { 
     getClientes, 
     getCliente, 
@@ -7,12 +8,12 @@ const {
     updateCliente 
 } = require('../controllers/clientes.controllers');
 
-router.get('/clientes', getClientes);
+router.get('/clientes', validarToken, validarRol(1), getClientes);
 
-router.get('/cliente/:idClientes', getCliente);
+router.get('/cliente/:idClientes', validarToken, getCliente);
 
-router.post('/cliente', createCliente);
+router.post('/cliente', validarToken, validarRol(1), createCliente);
 
-router.put('/cliente/:idClientes', updateCliente);
+router.put('/cliente/:idClientes', validarToken, updateCliente);
 
 module.exports = router;
