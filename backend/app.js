@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(bodyParser.json());
+app.use(express.json());
 
 // Ruta base
 app.get('/', (req, res) => {
@@ -28,16 +28,6 @@ app.use('/api', routes);
         console.log('Conexión a la base de datos exitosa.');
     } catch (error) {
         console.error('Error al conectar a la base de datos:', error);
-    }
-})();
-
-// Consulta de Prueba
-(async () => {
-    try {
-        const [results] = await sequelize.query("SELECT * FROM Usuarios");
-        console.log('Datos de la tabla usuarios:', results);
-    } catch (error) {
-        console.error('Error al consultar la tabla usuarios:', error);
     }
 })();
 
