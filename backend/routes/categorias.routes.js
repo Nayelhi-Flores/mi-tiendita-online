@@ -17,6 +17,6 @@ router.post('/categoria', validarToken, validarRol(1), createCategoria);
 
 router.put('/categoria/:idCategoria', validarToken, validarRol(1), updateCategoria);
 
-router.put('deshabilitar/categoria/:idCategoria', validarToken, validarRol(1), setCategoriaInactivo);
+router.put('/deshabilitar/categoria/:idCategoria', validarToken, validarRol(1), setCategoriaInactivo);
 
 module.exports = router;
