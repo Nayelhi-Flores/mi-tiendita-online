@@ -17,6 +17,6 @@ router.post('/producto', validarToken, validarRol(1), createProducto);
 
 router.put('/producto/:idProductos', validarToken, validarRol(1), updateProducto);
 
-router.put('deshabilitar/producto/:idProductos', validarToken, validarRol(1), setProductoInactivo);
+router.put('/deshabilitar/producto/:idProductos', validarToken, validarRol(1), setProductoInactivo);
 
 module.exports = router;

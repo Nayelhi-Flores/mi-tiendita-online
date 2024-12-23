@@ -18,7 +18,7 @@ router.post('/usuario', validarToken, validarRol(1), createUsuario);
 
 router.put('/usuario/:idUsuario', validarToken, updateUsuario);
 
-router.put('deshabilitar/usuario/:idUsuario', validarToken, validarRol(1), setUsuarioInactivo);
+router.put('/deshabilitar/usuario/:idUsuario', validarToken, validarRol(1), setUsuarioInactivo);
 
 router.put('/actualizar-password/usuario/:idUsuario', validarToken, actualizarPassword);
 
