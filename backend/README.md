@@ -1,17 +1,17 @@
 ###### Nombre: Katherine Nayelhi Flores Figueroa
 ###### Clave : GDA00560-OT
 
-[!TIP]  
+> .[!TIP].
 > **Cómo configurar el archivo `.env`:**
 > Variables utilizadas:
 >    ```env
 >    DB_NAME=GDA00560OT_KatherineFlores
-     DB_USER
-     DB_PASSWORD
-     DB_HOST
-     PORT
-     JWT_SECRET
-     JWT_EXPIRATION=24h
+>    DB_USER
+>    DB_PASSWORD
+>    DB_HOST
+>    PORT
+>    JWT_SECRET
+>    JWT_EXPIRATION=24h
 >    ```
 
 ## ENDPOINTS
