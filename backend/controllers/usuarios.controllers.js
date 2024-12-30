@@ -1,11 +1,8 @@
 const sequelize = require('../sequelize');
 const bcrypt = require('bcryptjs');
-
-// Función auxiliar para manejar errores
-const manejarError = (res, error, message) => {
-    console.error(message, error);
-    res.status(500).json({ error: message });
-};
+const manejarError = require('../helpers/errores');
+const { convertToInteger } = require('../helpers/validaciones');
+const ROLES = require('../helpers/roles');
 
 // Obtener todos los usuarios
 const getUsuarios = async (req, res) => {
@@ -19,14 +16,29 @@ const getUsuarios = async (req, res) => {
 
 // Obtener un usuario por ID
 const getUsuario = async (req, res) => {
-    const { idUsuario } = req.params;
+    const { idUsuario: paramsIdUsuario } = req.params;
+    const tokenIdUsuario = req.usuario.idUsuario;
+    const tokenRol = req.usuario.rol;
+
     try {
-        const idUsuarioInt = parseInt(idUsuario, 10); // Convertir ID a entero
+        let idUsuario;
+
+        if (tokenRol === ROLES.CLIENTE) {
+            idUsuario = tokenIdUsuario;
+        } else if (tokenRol === ROLES.OPERADOR) {
+            if (!paramsIdUsuario) {
+                idUsuario = tokenIdUsuario;
+            } else {
+                idUsuario = paramsIdUsuario;
+            }
+        } else {
+            return res.status(403).json({ message: 'Acceso denegado' });
+        }
 
         const usuario = await sequelize.query(
             'EXEC sp_ConsultarUsuarioPorId @idUsuarios = :idUsuario;',
             {
-                replacements: { idUsuario: idUsuarioInt },
+                replacements: { idUsuario: convertToInteger(idUsuario) },
                 type: sequelize.QueryTypes.SELECT
             }
         );
@@ -66,9 +78,9 @@ const createUsuario = async (req, res) => {
                 @fecha_nacimiento = :fecha_nacimiento;`,
             {
                 replacements: { 
-                    rol: rol,
-                    estado: estado || null,
-                    cliente: cliente || null,
+                    rol: convertToInteger(rol),
+                    estado: convertToInteger(estado) || null,
+                    cliente: convertToInteger(cliente) || null,
                     nombre: nombre,
                     correo: correo,
                     password: hashedPassword,
@@ -85,7 +97,6 @@ const createUsuario = async (req, res) => {
 
 // Actualizar la contraseña de un usuario
 const actualizarPassword = async (req, res) => {
-    const { idUsuario } = req.params;
     const { passwordActual, nuevoPassword } = req.body;
 
     if (!passwordActual || !nuevoPassword) {
@@ -93,13 +104,13 @@ const actualizarPassword = async (req, res) => {
     }
 
     try {
-        const idUsuarioInt = parseInt(idUsuario, 10); // Convertir ID a entero
+        const idUsuario = req.usuario.idUsuario; // Obtener ID del token
 
         // Buscar al usuario en la base de datos
         const [usuario] = await sequelize.query(
             'SELECT password FROM Usuarios WHERE idUsuarios = :idUsuario;',
             {
-                replacements: { idUsuario: idUsuarioInt },
+                replacements: { idUsuario: idUsuario },
                 type: sequelize.QueryTypes.SELECT
             }
         );
@@ -125,7 +136,7 @@ const actualizarPassword = async (req, res) => {
                 @password = :nuevoPassword;`,
             {
                 replacements: {
-                    idUsuario: idUsuarioInt,
+                    idUsuario: idUsuario,
                     nuevoPassword: hashedNuevoPassword
                 }
             }
@@ -142,8 +153,6 @@ const updateUsuario = async (req, res) => {
     const { rol, estado, cliente, nombre, correo, telefono, fecha_nacimiento } = req.body;
 
     try {
-        const idUsuarioInt = parseInt(idUsuario, 10); // Convertir ID a entero
-        
         await sequelize.query(
             `EXEC sp_ActualizarUsuario
                 @idUsuarios = :idUsuario,
@@ -156,10 +165,10 @@ const updateUsuario = async (req, res) => {
                 @fecha_nacimiento = :fecha_nacimiento;`,
             {
                 replacements: {
-                    idUsuario: idUsuarioInt,
-                    rol: rol || null,
-                    estado: estado || null,
-                    cliente: cliente || null,
+                    idUsuario: convertToInteger(idUsuario),
+                    rol: convertToInteger(rol) || null,
+                    estado: convertToInteger(estado) || null,
+                    cliente: convertToInteger(cliente) || null,
                     nombre: nombre || null,
                     correo: correo || null,
                     telefono: telefono || null,
@@ -177,15 +186,13 @@ const setUsuarioInactivo = async (req, res) => {
     const { idUsuario } = req.params;
 
     try {
-        const idUsuarioInt = parseInt(idUsuario, 10); // Convertir ID a entero
-        
         await sequelize.query(
             `EXEC sp_ActualizarUsuario
                 @idUsuarios = :idUsuario,
                 @estados_idEstados = :estado;`,
             {
                 replacements: {
-                    idUsuario: idUsuarioInt,
+                    idUsuario: convertToInteger(idUsuario),
                     estado: 2
                 },
             }

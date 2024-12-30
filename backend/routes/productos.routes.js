@@ -8,15 +8,16 @@ const {
     updateProducto,
     setProductoInactivo
 } = require('../controllers/productos.controllers');
+const ROLES = require('../helpers/roles');
 
 router.get('/productos', validarToken, getProductos);
 
 router.get('/producto', validarToken, getProducto);
 
-router.post('/producto', validarToken, validarRol(1), createProducto);
+router.post('/producto', validarToken, validarRol(ROLES.OPERADOR), createProducto);
 
-router.put('/producto/:idProductos', validarToken, validarRol(1), updateProducto);
+router.put('/producto/:idProductos', validarToken, validarRol(ROLES.OPERADOR), updateProducto);
 
-router.put('/deshabilitar/producto/:idProductos', validarToken, validarRol(1), setProductoInactivo);
+router.put('/deshabilitar/producto/:idProductos', validarToken, validarRol(ROLES.OPERADOR), setProductoInactivo);
 
 module.exports = router;

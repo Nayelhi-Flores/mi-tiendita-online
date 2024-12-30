@@ -1,10 +1,7 @@
 const sequelize = require('../sequelize');
-
-// Función auxiliar para manejar errores
-const manejarError = (res, error, message) => {
-    console.error(message, error);
-    res.status(500).json({ error: message });
-};
+const jwt = require('jsonwebtoken');
+const { manejarError } = require('../helpers/errores');
+const { convertToInteger } = require('../helpers/validaciones');
 
 // Obtener todas las categorias
 const getCategorias = async (req, res) => {
@@ -26,8 +23,8 @@ const getCategoria = async (req, res) => {
                 @estado = :estado;`,
             {
                 replacements: {
-                    idCategoria: idCategoria || null,
-                    estado: estado || null
+                    idCategoria: convertToInteger(idCategoria) || null,
+                    estado: convertToInteger(estado) || null
                 },
                 type: sequelize.QueryTypes.SELECT
             }
@@ -45,7 +42,7 @@ const getCategoria = async (req, res) => {
 
 // Crear una categoria
 const createCategoria = async (req, res) => {
-    const { usuario, estado, nombre } = req.body;
+    const { estado, nombre } = req.body;
 
     // Validar datos requeridos
     if (!nombre) {
@@ -53,6 +50,8 @@ const createCategoria = async (req, res) => {
     }
 
     try {
+        const usuario = req.usuario.idUsuario; // Obtener ID del token
+
         await sequelize.query(
             `EXEC sp_InsertarCategoriaProductos
                 @usuarios_idUsuarios = :usuario, 
@@ -61,7 +60,7 @@ const createCategoria = async (req, res) => {
             {
                 replacements: {
                     usuario: usuario || null,
-                    estado: estado || null, 
+                    estado: convertToInteger(estado) || null, 
                     nombre: nombre
                 },
             }
@@ -78,8 +77,6 @@ const updateCategoria = async (req, res) => {
     const { estado, nombre} = req.body;
 
     try {
-        const idCategoriaInt = parseInt(idCategoria, 10); // Convertir ID a entero
-        
         await sequelize.query(
             `EXEC sp_ActualizarCategoriaProductos
                 @idCategoriaProductos = :idCategoria,
@@ -87,8 +84,8 @@ const updateCategoria = async (req, res) => {
                 @nombre = :nombre;`,
             {
                 replacements: {
-                    idCategoria: idCategoriaInt,
-                    estado: estado || null, 
+                    idCategoria: convertToInteger(idCategoria),
+                    estado: convertToInteger(estado) || null, 
                     nombre: nombre || null
                 },
             }
@@ -99,19 +96,18 @@ const updateCategoria = async (req, res) => {
     }
 };
 
+// Desactivar una categoria
 const setCategoriaInactivo = async (req, res) => {
     const { idCategoria } = req.params;
 
     try {
-        const idCategoriaInt = parseInt(idCategoria, 10); // Convertir ID a entero
-        
         await sequelize.query(
             `EXEC sp_ActualizarCategoriaProductos
                 @idCategoriaProductos = :idCategoria,
                 @estados_idEstados = :estado;`,
             {
                 replacements: {
-                    idCategoria: idCategoriaInt,
+                    idCategoria: convertToInteger(idCategoria),
                     estado: 2
                 },
             }

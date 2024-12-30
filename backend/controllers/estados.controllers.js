@@ -1,10 +1,6 @@
 const sequelize = require('../sequelize');
-
-// Función auxiliar para manejar errores
-const manejarError = (res, error, message) => {
-    console.error(message, error);
-    res.status(500).json({ error: message });
-};
+const { manejarError } = require('../helpers/errores');
+const { convertToInteger } = require('../helpers/validaciones');
 
 // Obtener todos los estados
 const getEstados = async (req, res) => {
@@ -20,12 +16,10 @@ const getEstados = async (req, res) => {
 const getEstado = async (req, res) => {
     const { idEstado } = req.params;
     try {
-        const idEstadoInt = parseInt(idEstado, 10); // Convertir ID a entero
-
         const estado = await sequelize.query(
             'EXEC sp_ConsultarEstadoPorId @idEstados = :idEstado;',
             {
-                replacements: { idEstado: idEstadoInt },
+                replacements: { idEstado: convertToInteger(idEstado) },
                 type: sequelize.QueryTypes.SELECT
             }
         );
@@ -68,15 +62,13 @@ const updateEstado = async (req, res) => {
     const { nombre} = req.body;
 
     try {
-        const idEstadoInt = parseInt(idEstado, 10); // Convertir ID a entero
-        
         await sequelize.query(
             `EXEC sp_ActualizarEstados
                 @idEstados = :idEstado,
                 @nombre = :nombre;`,
             {
                 replacements: {
-                    idEstado: idEstadoInt,
+                    idEstado: convertToInteger(idEstado),
                     nombre: nombre || null
                 },
             }
@@ -92,12 +84,10 @@ const deleteEstado = async (req, res) => {
     const { idEstado } = req.params;
 
     try {
-        const idEstadoInt = parseInt(idEstado, 10); // Convertir ID a entero
-        
         await sequelize.query(
             'EXEC sp_EliminarEstado @idEstados = :idEstado;',
             {
-                replacements: { idEstado: idEstadoInt },
+                replacements: { idEstado: convertToInteger(idEstado) },
             }
         );
         res.status(201).json({ message: 'Estado eliminado exitosamente' });

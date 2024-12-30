@@ -7,12 +7,14 @@ const {
     createCliente, 
     updateCliente 
 } = require('../controllers/clientes.controllers');
+const ROLES = require('../helpers/roles');
 
-router.get('/clientes', validarToken, validarRol(1), getClientes);
+router.get('/clientes', validarToken, validarRol(ROLES.OPERADOR), getClientes);
 
-router.get('/cliente/:idClientes', validarToken, getCliente);
+router.get('/cliente/:idClientes', validarToken, validarRol(ROLES.OPERADOR), getCliente);
+router.get('/cliente', validarToken, validarRol(ROLES.CLIENTE), getCliente);
 
-router.post('/cliente', validarToken, validarRol(1), createCliente);
+router.post('/cliente', validarToken, validarRol(ROLES.OPERADOR), createCliente);
 
 router.put('/cliente/:idClientes', validarToken, updateCliente);
 

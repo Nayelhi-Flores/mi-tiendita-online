@@ -3,10 +3,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const login = async (req, res) => {
-    const { rol, correo, password } = req.body
+    const { correo, password } = req.body
 
     // Validar los campos
-    if (!rol || !correo || !password) {
+    if (!correo || !password) {
         return res.status(400).json({ error: 'Por favor, debe llenar todos los campos solicitados' });
     }
 
@@ -24,11 +24,6 @@ const login = async (req, res) => {
         // Verificar si el correo esta registrado
         if (!usuario) {
             return res.status(404).json({ error: 'Correo no registrado' });
-        }
-
-        // Validar el rol del usuario
-        if (usuario[0].rol_idRol !== parseInt(rol, 10)) {
-            return res.status(403).json({ error: 'Rol no autorizado' });
         }
 
         // Validar contraseña

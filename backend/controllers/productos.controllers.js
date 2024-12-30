@@ -1,6 +1,8 @@
 const sequelize = require('../sequelize');
 const multer = require('multer');
 const path = require('path');
+const { manejarError } = require('../helpers/errores'); 
+const { convertToInteger, convertToFloat } = require('../helpers/validaciones');
 
 // Configurar multer
 const storage = multer.memoryStorage();
@@ -15,12 +17,6 @@ const upload = multer({
         cb(null, true);
     }
 });
-
-// Función auxiliar para manejar errores
-const manejarError = (res, error, message) => {
-    console.error(message, error);
-    res.status(500).json({ error: message });
-};
 
 // Obtener todos los productos
 const getProductos = async (req, res) => {
@@ -103,14 +99,16 @@ const createProducto = async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
         
-        const { categoriaProductos, usuario, estado, nombre, descripcion, marca, codigo, stock, precio } = req.body;
-       
-        // Convertir los datos al tipo esperado
-        const categoriaProductosId = categoriaProductos ? parseInt(categoriaProductos, 10) : null;
-        const usuarioId = usuario ? parseInt(usuario, 10) : null;
-        const estadoId = estado ? parseInt(estado, 10) : null;
-        const stockInt = stock ? parseInt(stock, 10) : null;
-        const precioFloat = precio ? parseFloat(precio) : null;
+        const { 
+            categoriaProductos, 
+            estado, 
+            nombre, 
+            descripcion, 
+            marca, 
+            codigo, 
+            stock, 
+            precio 
+        } = req.body;
 
         // Validar datos requeridos
         if (!nombre || !stock || !precio) {
@@ -130,6 +128,8 @@ const createProducto = async (req, res) => {
         }
 
         try {
+            const usuario = req.usuario.idUsuario; // Obtener ID del token
+
             await sequelize.query(
                 `EXEC sp_InsertarProducto 
                     @categoriaProductos_idCategoriaProductos = :categoriaProductos, 
@@ -144,15 +144,15 @@ const createProducto = async (req, res) => {
                     @foto = :foto;`,
                 {
                     replacements: {
-                        categoriaProductos: categoriaProductosId || null,
-                        usuario: usuarioId || null,
-                        estado: estadoId || null, 
+                        categoriaProductos: convertToInteger(categoriaProductos) || null,
+                        usuario: usuario || null,
+                        estado: convertToInteger(estado) || null, 
                         nombre: nombre,
                         descripcion: descripcion || null,
                         marca: marca || null,
                         codigo: codigo || null,
-                        stock: stockInt,
-                        precio: precioFloat,
+                        stock: convertToInteger(stock),
+                        precio: convertToFloat(precio),
                         foto: fotoBinaria || null
                     },
                 }
@@ -175,11 +175,20 @@ const updateProducto = async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
-        const { categoriaProductos, usuario, estado, nombre, descripcion, marca, codigo, stock, precio } = req.body;
+        const { 
+            categoriaProductos, 
+            estado, 
+            nombre, 
+            descripcion, 
+            marca, 
+            codigo, 
+            stock, 
+            precio 
+        } = req.body;
 
         try {
-            const idProductosInt = parseInt(idProductos, 10); // Convertir ID a entero
-            
+            const usuario = req.usuario.idUsuario; // Obtener ID del token
+
             // Obtener la foto de la solicitud (si se envió)
             const file = req.file;
             let fotoBinaria = null;
@@ -207,16 +216,16 @@ const updateProducto = async (req, res) => {
                     @foto = :foto;`,
                 {
                     replacements: {
-                        idProductos: idProductosInt,
-                        categoriaProductos: categoriaProductos || null,
+                        idProductos: convertToInteger(idProductos),
+                        categoriaProductos: convertToInteger(categoriaProductos) || null,
                         usuario: usuario || null,
-                        estado: estado || null, 
+                        estado: convertToInteger(estado) || null, 
                         nombre: nombre || null,
                         descripcion: descripcion || null,
                         marca: marca || null,
                         codigo: codigo || null,
-                        stock: stock ? parseInt(stock, 10) : null,
-                        precio: precio ? parseFloat(precio) : null,
+                        stock: convertToInteger(stock) || null,
+                        precio: convertToFloat(precio) || null,
                         foto: fotoBinaria || null
                     },
                 }
@@ -233,13 +242,11 @@ const setProductoInactivo = async (req, res) => {
     const { idProductos } = req.params;
 
     try {
-        const idProductosInt = parseInt(idProductos, 10); // Convertir ID a entero
-        
         const [results] = await sequelize.query(
             'EXEC sp_CambiarEstadoProducto @idProductos = :idProductos;',
             {
                 replacements: { 
-                    idProductos: idProductosInt
+                    idProductos: convertToInteger(idProductos)
                 },
             }
         );

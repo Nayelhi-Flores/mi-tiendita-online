@@ -1,10 +1,8 @@
 const sequelize = require('../sequelize');
-
-// Función auxiliar para manejar errores
-const manejarError = (res, error, message) => {
-    console.error(message, error);
-    res.status(500).json({ error: message });
-};
+const manejarError = require('../helpers/errores');
+const { convertToInteger } = require('../helpers/validaciones');
+const ROLES = require('../helpers/roles');
+const { Sequelize } = require('sequelize');
 
 // Obtener todas las ordenes
 const getOrdenes = async (req, res) => {
@@ -19,16 +17,38 @@ const getOrdenes = async (req, res) => {
 // Obtener una orden por ID
 const getOrden = async (req, res) => {
     const { idOrden } = req.params
+    const tokenIdUsuario = req.usuario.idUsuario;
+    const tokenRol = req.usuario.rol;
+
     try {
-        const orden = await sequelize.query(
-            'EXEC sp_ConsultarMaestroDetallePorId @idOrden = :idOrden;',
-            {
-                replacements: {
-                    idOrden: idOrden
-                },
-                type: sequelize.QueryTypes.SELECT
-            }
-        );
+        let orden;
+
+        if (tokenRol === ROLES.CLIENTE) {
+            orden = await sequelize.query(
+                `EXEC sp_ObtenerOrdenDeUsuario 
+                    @idOrden = :idOrden, 
+                    @idUsuario = :idUsuario;`,
+                {
+                    replacements: {
+                        idOrden: convertToInteger(idOrden),
+                        idUsuario: tokenIdUsuario
+                    },
+                    type: sequelize.QueryTypes.SELECT
+                }
+            );
+        } else if (tokenRol === ROLES.OPERADOR) {
+            orden = await sequelize.query(
+                'EXEC sp_ConsultarMaestroDetallePorId @idOrden = :idOrden;',
+                {
+                    replacements: {
+                        idOrden: convertToInteger(idOrden)
+                    },
+                    type: sequelize.QueryTypes.SELECT
+                }
+            );
+        } else {
+            return res.status(403).json({ message: 'Acceso denegado' });
+        }
 
         if (orden.length > 0) {
             res.json(orden);
@@ -38,19 +58,21 @@ const getOrden = async (req, res) => {
     } catch (error) {
         manejarError(res, error, 'Error al obtener la orden');
     }
-}
+};
 
 // Crear una orden
 const createOrden = async (req, res) => {
-    const { usuario, nombre, direccion, telefono, correo, fecha_entrega, detalles } = req.body;
+    const { nombre, direccion, telefono, correo, fecha_entrega, detalles } = req.body;
 
     // Validar datos requeridos
-    if (!usuario || !correo || !fecha_entrega || !detalles || !detalles.length) {
+    if (!correo || !fecha_entrega || !detalles || !detalles.length) {
         return res.status(400).json({ error: 'Por favor, ingrese todos los datos requeridos para realizar la orden' });
     }
 
     try {
-        const [results] = await sequelize.query(
+        const usuario = req.usuario.idUsuario; // Obtener ID del token
+
+        await sequelize.query(
             `EXEC sp_InsertarOrdenConDetalles
                 @usuarios_idUsuarios = :usuario,
                 @estados_idEstados = :estado,
@@ -83,7 +105,6 @@ const createOrden = async (req, res) => {
 const updateOrden = async (req, res) => {
     const { idOrden } = req.params; // ID de la orden que se actualizará
     const {
-        estado,
         nombre,
         direccion,
         telefono,
@@ -91,9 +112,27 @@ const updateOrden = async (req, res) => {
         fecha_entrega,
         detalles,
     } = req.body;
+    const tokenIdUsuario = req.usuario.idUsuario;
+    const tokenRol = req.usuario.rol;
 
     try {
-        const idOrdenInt = parseInt(idOrden, 10); // Convertir ID a entero
+        if (tokenRol === ROLES.CLIENTE) {
+            // Verificar si la orden pertenece al cliente
+            const resultado = await sequelize.query(
+                'EXEC sp_VerificarOrdenDeUsuario @idOrden = :idOrden, @idUsuario = :idUsuario;',
+                {
+                    replacements: {
+                        idOrden: convertToInteger(idOrden),
+                        idUsuario: tokenIdUsuario,
+                    },
+                    type: sequelize.QueryTypes.SELECT,
+                }
+            );
+
+            if (resultado.length === 0) {
+                return res.status(403).json({ message: 'No tienes permiso para actualizar esta orden' });
+            }
+        }
 
         await sequelize.query(
             `EXEC sp_ActualizarOrden
@@ -107,8 +146,8 @@ const updateOrden = async (req, res) => {
                 @detalles = :detalles;`,
             {
                 replacements: {
-                    idOrden: idOrdenInt,
-                    estado: estado || null,
+                    idOrden: convertToInteger(idOrden),
+                    estado: null,
                     nombre: nombre || null,
                     direccion: direccion || null,
                     telefono: telefono || null,
@@ -127,16 +166,34 @@ const updateOrden = async (req, res) => {
 // Cancelar una orden
 const cancelarOrden = async (req, res) => {
     const { idOrden } = req.params;
+    const tokenIdUsuario = req.usuario.idUsuario;
+    const tokenRol = req.usuario.rol;
 
     try {
-        const idOrdenInt = parseInt(idOrden, 10); // Convertir ID a entero
-        
+        if (tokenRol === ROLES.CLIENTE) {
+            // Verificar si la orden pertenece al cliente
+            const resultado = await sequelize.query(
+                'EXEC sp_VerificarOrdenDeUsuario @idOrden = :idOrden, @idUsuario = :idUsuario;',
+                {
+                    replacements: {
+                        idOrden: convertToInteger(idOrden),
+                        idUsuario: tokenIdUsuario,
+                    },
+                    type: sequelize.QueryTypes.SELECT,
+                }
+            );
+
+            if (resultado.length === 0) {
+                return res.status(403).json({ message: 'No tienes permiso para cancelar esta orden' });
+            }
+        }
+
         await sequelize.query(
             `EXEC sp_CancelarOrden
                 @idOrden = :idOrden;`,
             {
                 replacements: {
-                    idOrden: idOrdenInt
+                    idOrden: convertToInteger(idOrden)
                 },
             }
         );
@@ -158,7 +215,7 @@ const cambiarEstadoOrden = async (req, res) => {
                 @estados_idEstados = :estado;`,
             {
                 replacements: {
-                    idOrden: idOrden,
+                    idOrden: convertToInteger(idOrden),
                     estado: estado
                 },
             }

@@ -8,15 +8,16 @@ const {
     updateEstado,
     deleteEstado
 } = require('../controllers/estados.controllers');
+const ROLES = require('../helpers/roles');
 
-router.get('/estados', validarToken, validarRol(1), getEstados);
+router.get('/estados', validarToken, validarRol(ROLES.OPERADOR), getEstados);
 
-router.get('/estado/:idEstado', validarToken, validarRol(1), getEstado);
+router.get('/estado/:idEstado', validarToken, validarRol(ROLES.OPERADOR), getEstado);
 
-router.post('/estado', validarToken, validarRol(1), createEstado);
+router.post('/estado', validarToken, validarRol(ROLES.OPERADOR), createEstado);
 
-router.put('/estado/:idEstado', validarToken, validarRol(1), updateEstado);
+router.put('/estado/:idEstado', validarToken, validarRol(ROLES.OPERADOR), updateEstado);
 
-router.delete('/estado/:idEstado', validarToken, validarRol(1), deleteEstado);
+router.delete('/estado/:idEstado', validarToken, validarRol(ROLES.OPERADOR), deleteEstado);
 
 module.exports = router;

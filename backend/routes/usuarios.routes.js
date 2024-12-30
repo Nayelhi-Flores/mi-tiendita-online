@@ -9,16 +9,18 @@ const {
     updateUsuario,
     setUsuarioInactivo 
 } = require('../controllers/usuarios.controllers');
+const ROLES = require('../helpers/roles');
 
-router.get('/usuarios', validarToken, validarRol(1), getUsuarios);
+router.get('/usuarios', validarToken, validarRol(ROLES.OPERADOR), getUsuarios);
 
-router.get('/usuario/:idUsuario', validarToken, getUsuario);
+router.get('/usuario/:idUsuario', validarToken, validarRol(ROLES.OPERADOR), getUsuario);
+router.get('/usuario', validarToken, getUsuario);
 
-router.post('/usuario', validarToken, validarRol(1), createUsuario);
+router.post('/usuario', validarToken, validarRol(ROLES.OPERADOR), createUsuario);
 
 router.put('/usuario/:idUsuario', validarToken, updateUsuario);
 
-router.put('/deshabilitar/usuario/:idUsuario', validarToken, validarRol(1), setUsuarioInactivo);
+router.put('/deshabilitar/usuario/:idUsuario', validarToken, validarRol(ROLES.OPERADOR), setUsuarioInactivo);
 
 router.put('/actualizar-password/usuario/:idUsuario', validarToken, actualizarPassword);
 

@@ -9,8 +9,9 @@ const {
     cancelarOrden, 
     cambiarEstadoOrden 
 } = require('../controllers/ordenes.controllers');
+const ROLES = require('../helpers/roles');
 
-router.get('/ordenes', validarToken, validarRol(1), getOrdenes);
+router.get('/ordenes', validarToken, validarRol(ROLES.OPERADOR), getOrdenes);
 
 router.get('/orden/:idOrden', validarToken, getOrden);
 
@@ -20,6 +21,6 @@ router.put('/orden/:idOrden', validarToken, updateOrden);
 
 router.put('/cancelar/orden/:idOrden', validarToken, cancelarOrden);
 
-router.put('/cambiar-estado/orden/:idOrden', validarToken, validarRol(1), cambiarEstadoOrden);
+router.put('/cambiar-estado/orden/:idOrden', validarToken, validarRol(ROLES.OPERADOR), cambiarEstadoOrden);
 
 module.exports = router;
